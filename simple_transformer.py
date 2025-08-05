@@ -39,9 +39,9 @@ class TransformerBlock(nn.Module):
         self.attention = nn.MultiheadAttention(embed_dim=d_model, num_heads=n_heads, batch_first=True)
         self.ln1 = nn.LayerNorm(d_model)
         self.fcn = nn.Sequential(
-            nn.Linear(d_model, d_model * 4),
+            nn.Linear(d_model, d_model * 6),
             nn.ReLU(),
-            nn.Linear(d_model * 4, d_model)
+            nn.Linear(d_model * 6, d_model)
         )
         self.ln2 = nn.LayerNorm(d_model)
     
@@ -66,19 +66,25 @@ class SimpleTransformer(nn.Module):
         logits = self.fcn_out(x)
         return logits, attn_weights
 
-def visualize_attention(model, X_input):
+def visualize_attention(model, file_path):
     model.eval()
+    with open(file_path, 'r') as f:
+        input_text = f.read().strip()
+    
+    input_tokens = encode(input_text)
+    x_input = torch.tensor([input_tokens], dtype=torch.long)
+
     with torch.no_grad():
-        logits , attn_weights = model(X_input)
+        logits, _ = model(x_input)
 
     # Get the predicted token
     predicted_idx = torch.argmax(logits[0, -1]).unsqueeze(0).unsqueeze(0)  # Shape: (1, 1)
     # Append predicted token to X_input sequence
-    X_input = torch.cat([X_input, predicted_idx], dim=1)  # Shape: (1, seq_len + 1)
+    X_input = torch.cat([x_input, predicted_idx], dim=1)  # Shape: (1, seq_len + 1)
 
     # Re-run forward pass to get attention weights for updated sequence
     with torch.no_grad():
-        _, attn_weights = model(X_input)
+        _, attn_weights = model(x_input)
 
     # attn_weights: shape (batch_size, num_heads, seq_len, seq_len)
     attn = attn_weights.detach().numpy()
@@ -88,7 +94,7 @@ def visualize_attention(model, X_input):
     seq_len = attn.shape[2]
 
     # Decode tokens for axis labels
-    tokens = [itos[i.item()] for i in X_input[batch_idx]]
+    tokens = [itos[i.item()] for i in x_input[batch_idx]]
 
     fig, axes = plt.subplots(1, num_heads, figsize=(6 * num_heads, 6))
 
@@ -112,15 +118,44 @@ def visualize_attention(model, X_input):
     # Show colorbar as intensity legend
     cbar = fig.colorbar(im, ax=axes, orientation='vertical', fraction=0.02, pad=0.04)
     cbar.set_label("Attention weight intensity")
-    plt.title("Attention weights per head")
     plt.show()  
 
+def predict_next_tokens(model, file_path, n_pred=2):
+    model.eval()
+    with open(file_path, 'r') as f:
+        input_text = f.read().strip()
+
+    print(f"Input text: '{input_text}'")
+
+    # Encode initial input
+    input_tokens = encode(input_text)
+    x_input = torch.tensor([input_tokens], dtype=torch.long)
+
+    generated_tokens = input_tokens.copy()
+
+    for _ in range(n_pred):
+        with torch.no_grad():
+            logits, _ = model(x_input)
+
+        # Get prediction for the last token in sequence
+        next_token_logits = logits[0, -1]
+        predicted_idx = torch.argmax(next_token_logits).item()
+
+        # Append prediction
+        generated_tokens.append(predicted_idx)
+
+        # Update X_input
+        x_input = torch.tensor([generated_tokens], dtype=torch.long)
+
+    generated_text = decode(generated_tokens)
+    print(f"Generated text: {generated_text}")
 
 
 if __name__ == "__main__":
 
+    test_file = 'data/test.txt'
     # Sample data 
-    with open('data.txt', 'r', encoding='utf-8') as f:
+    with open('data/data.txt', 'r', encoding='utf-8') as f:
         text = f.read()
 
     # Create the volabulary
@@ -150,16 +185,9 @@ if __name__ == "__main__":
             print(f"Epoch {epoch}: Loss = {loss.item():.4f}")
         
 
-    # Visualize Attention weights
-    X_test = torch.tensor([[stoi['a'], stoi['lazy'], stoi['brown']]])
-    model.eval()
-    with torch.no_grad():
-        logits, _ = model(X_test)
-    predicted_idx = torch.argmax(logits[0, -1]).item()
-    in_str = decode(X_test.squeeze(0).detach().numpy())
-    print(f"Input: '{in_str}'")
-    print(f"Next word prediction: {itos[predicted_idx]}")
-    visualize_attention(model, X_test)
+    # Test and Visualize Attention weights
+    predict_next_tokens(model, test_file, 4)
+    visualize_attention(model, test_file)
     
 
     
