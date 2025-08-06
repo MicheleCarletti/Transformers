@@ -16,6 +16,7 @@ includes visualization of attention weights.
 -   `data/data.txt`: Training data file (plain text).
 -   `data/test.txt`: Test input file for predictions and attention
     visualization.
+-   `data/trs.pth`: A pre-trained version.
 
 ## Code Breakdown
 
@@ -46,6 +47,9 @@ includes visualization of attention weights.
 
     -   Place your training corpus in `data/data.txt`.
     -   Place your test input sequence in `data/test.txt`.
+    -   In the main script the boolean flag `train_only` is used to 
+        train the model and save the checkpoint or to load a pre-trained
+        version and test it.
 
 2.  **Run the script**: `bash     python transformer_example.py`
 

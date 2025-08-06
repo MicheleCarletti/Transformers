@@ -20,7 +20,7 @@ def decode(l):
     return ' '.join([itos[int(i)] for i in l])
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_len=600):
+    def __init__(self, d_model, max_len=2000):
         super().__init__()
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len).unsqueeze(1)

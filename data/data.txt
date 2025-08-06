@@ -35,16 +35,19 @@ birds sing melodies from the treetops
 the flowers sway in rhythm with the breeze
 the animals rest together under the blue sky
 a rabbit hops across the grassy field
-the fox notices and quietly follows
-the dog barks, startling the rabbit
-the rabbit scurries into a hidden burrow
-the fox smiles and lies down on the soft grass
-the dog joins and rolls onto its back
-together they watch the clouds drift by
-the sun sets behind the tall trees
-the sky turns shades of orange and pink
-fireflies start to light up the meadow
-the fox chases the glowing lights
+
+In the heart of an ancient city, nestled between cobblestone streets and ivy-covered buildings, lived an old clockmaker named Elias. His tiny workshop was a labyrinth of gears, springs, and ticking timepieces that danced to the rhythm of eternity.
+Elias wasn’t an ordinary craftsman. The townspeople whispered that his clocks didn’t just tell time—they remembered it. Stories told of how his grandest creation, the “Chronosphere,” could replay moments from the past when wound precisely at midnight.
+One rainy evening, a young girl named Mira stumbled into the shop, soaked to the bone, clutching a small, broken pocket watch. Her eyes sparkled with curiosity as she gazed at the mechanical wonders around her.
+“My father’s watch,” she said softly. “It stopped the day he disappeared.”
+Elias examined the watch, his fingers moving with practiced grace. But as he opened the case, his brow furrowed. Inside, instead of a mechanism, was a tiny fragment of parchment, inscribed with strange symbols.
+“This… is a fragment of a Time Seal,” Elias murmured. “Your father was not just a watchmaker. He was a Keeper.”
+Over the following days, Elias and Mira worked side by side, decoding the ancient symbols. Each night, the Chronosphere would flicker to life, revealing shimmering visions of the past—some beautiful, others haunting.
+Finally, the truth emerged: Mira’s father had been trapped within a temporal loop, safeguarding the Time Seal from those who sought to rewrite history.
+With the final piece in place, Elias and Mira activated the Chronosphere one last time. A brilliant light filled the room as the boundaries of time bent. From within the swirling vortex, Mira’s father stepped out, unchanged, as if no time had passed.
+The city bells tolled midnight.
+Elias smiled, knowing his workshop had once again fulfilled its destiny—not just to measure time, but to heal it.
+
 the dog watches with wagging tail
 the night is calm and filled with gentle sounds
 an owl hoots from a nearby branch
@@ -64,3 +67,22 @@ the meadow is their favorite playground
 day after day they explore and discover
 in the forest every path tells a new story
 the fox and dog are best friends forever
+User: Hello, how are you?
+Bot: I'm doing great, thank you! How can I assist you today?
+User: Can you tell me a joke?
+Bot: Why did the math book look sad? Because it had too many problems.
+User: That's funny! Can you explain transformers to me?
+Bot: Sure! Transformers are deep learning models designed to handle sequential data, especially in NLP tasks.
+Once upon a time, in a small village, lived a young boy named Liam. Every morning, he would walk through the dense forest to reach his school.
+The forest was filled with towering trees, chirping birds, and occasionally, a curious fox.
+Liam enjoyed these walks, imagining himself as an explorer discovering unknown lands.
+One day, while venturing off the usual path, Liam stumbled upon an ancient stone tablet covered in mysterious symbols.
+Determined to decipher its secrets, he took it home and began researching ancient scripts.
+Days turned into weeks, but Liam never gave up. Eventually, he unlocked the code, revealing a map to a hidden underground library filled with knowledge lost to time.
+Hi
+How are you doing today?
+The sky is blue.
+Artificial intelligence is revolutionizing industries across the globe.
+Understanding self-attention mechanisms is key to mastering transformers.
+This is a long sentence designed to test how the transformer model handles sequences of various lengths and whether positional encodings allow it to keep track of token order properly.
+
