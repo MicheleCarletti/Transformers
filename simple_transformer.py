@@ -20,7 +20,7 @@ def decode(l):
     return ' '.join([itos[int(i)] for i in l])
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_len=100):
+    def __init__(self, d_model, max_len=600):
         super().__init__()
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len).unsqueeze(1)
@@ -52,21 +52,28 @@ class TransformerBlock(nn.Module):
         return x, attn_weights
     
 class SimpleTransformer(nn.Module):
-    def __init__(self, vocab_size, d_model=32, nheads=2):
+    def __init__(self, vocab_size, d_model=64, nheads=4, num_layers=6):
         super().__init__()
         self.token_embedding = nn.Embedding(vocab_size, d_model)
         self.pos_encoding = PositionalEncoding(d_model)
-        self.transformer_block = TransformerBlock(d_model, nheads)
+        self.transformer_blocks = nn.ModuleList([
+            TransformerBlock(d_model, nheads) for _ in range(num_layers)
+        ])
         self.fcn_out = nn.Linear(d_model, vocab_size)
         
     def forward(self, x):
         x = self.token_embedding(x)
         x = self.pos_encoding(x)
-        x, attn_weights = self.transformer_block(x)
-        logits = self.fcn_out(x)
-        return logits, attn_weights
+        attn_weights_all_layers = []
 
-def visualize_attention(model, file_path):
+        for block in self.transformer_blocks:
+            x, attn_weights = block(x)
+            attn_weights_all_layers.append(attn_weights)    # (batch, heads, seq_len, seq_len)
+
+        logits = self.fcn_out(x)
+        return logits, attn_weights_all_layers
+
+def visualize_attention(model, file_path, layer_idx=-1):
     model.eval()
     with open(file_path, 'r') as f:
         input_text = f.read().strip()
@@ -77,6 +84,7 @@ def visualize_attention(model, file_path):
     with torch.no_grad():
         logits, _ = model(x_input)
 
+    
     # Get the predicted token
     predicted_idx = torch.argmax(logits[0, -1]).unsqueeze(0).unsqueeze(0)  # Shape: (1, 1)
     # Append predicted token to X_input sequence
@@ -84,7 +92,9 @@ def visualize_attention(model, file_path):
 
     # Re-run forward pass to get attention weights for updated sequence
     with torch.no_grad():
-        _, attn_weights = model(x_input)
+        _, attn_all_layers = model(X_input)
+    
+    attn_weights = attn_all_layers[layer_idx]   # Select attention weights of required layer
 
     # attn_weights: shape (batch_size, num_heads, seq_len, seq_len)
     attn = attn_weights.detach().numpy()
@@ -94,7 +104,7 @@ def visualize_attention(model, file_path):
     seq_len = attn.shape[2]
 
     # Decode tokens for axis labels
-    tokens = [itos[i.item()] for i in x_input[batch_idx]]
+    tokens = [itos[i.item()] for i in X_input[batch_idx]]
 
     fig, axes = plt.subplots(1, num_heads, figsize=(6 * num_heads, 6))
 
@@ -154,6 +164,7 @@ def predict_next_tokens(model, file_path, n_pred=2):
 if __name__ == "__main__":
 
     test_file = 'data/test.txt'
+    train_only = False
     # Sample data 
     with open('data/data.txt', 'r', encoding='utf-8') as f:
         text = f.read()
@@ -170,24 +181,31 @@ if __name__ == "__main__":
     X = data[:-1].unsqueeze(0)  # Input sequence (batch_size, sequence_length)
     y = data[1:].unsqueeze(0)   # Target sequence (batch_size, sequence_length)
 
-    model = SimpleTransformer(vocab_size)
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    criterion = nn.CrossEntropyLoss()
+    if train_only:
+        model = SimpleTransformer(vocab_size)
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+        criterion = nn.CrossEntropyLoss()
 
-    for epoch in range(200):
-        optimizer.zero_grad()
-        logits, attn_weights = model(X)
-        loss = criterion(logits.view(-1, vocab_size), y.view(-1))
-        loss.backward()
-        optimizer.step()
+        for epoch in range(500):
+            optimizer.zero_grad()
+            logits, _ = model(X)
+            loss = criterion(logits.view(-1, vocab_size), y.view(-1))
+            loss.backward()
+            optimizer.step()
 
-        if epoch % 20 == 0:
-            print(f"Epoch {epoch}: Loss = {loss.item():.4f}")
+            if epoch % 20 == 0:
+                print(f"Epoch {epoch}: Loss = {loss.item():.4f}")
+
+        # Save a checkpoint
+        torch.save(model.state_dict(), './data/trs.pth')
+        print("Checkpoint saved!")
+    else:
+        test_model = SimpleTransformer(vocab_size)
+        test_model.load_state_dict(torch.load("./data/trs.pth", map_location=torch.device('cpu')))
         
-
-    # Test and Visualize Attention weights
-    predict_next_tokens(model, test_file, 4)
-    visualize_attention(model, test_file)
+        # Test and Visualize Attention weights
+        predict_next_tokens(test_model, test_file, 4)
+        visualize_attention(test_model, test_file)
     
 
     
