@@ -73,62 +73,6 @@ class SimpleTransformer(nn.Module):
         logits = self.fcn_out(x)
         return logits, attn_weights_all_layers
 
-def visualize_attention(model, file_path, layer_idx=-1):
-    model.eval()
-    with open(file_path, 'r') as f:
-        input_text = f.read().strip()
-    
-    input_tokens = encode(input_text)
-    x_input = torch.tensor([input_tokens], dtype=torch.long)
-
-    with torch.no_grad():
-        logits, _ = model(x_input)
-
-    
-    # Get the predicted token
-    predicted_idx = torch.argmax(logits[0, -1]).unsqueeze(0).unsqueeze(0)  # Shape: (1, 1)
-    # Append predicted token to X_input sequence
-    X_input = torch.cat([x_input, predicted_idx], dim=1)  # Shape: (1, seq_len + 1)
-
-    # Re-run forward pass to get attention weights for updated sequence
-    with torch.no_grad():
-        _, attn_all_layers = model(X_input)
-    
-    attn_weights = attn_all_layers[layer_idx]   # Select attention weights of required layer
-
-    # attn_weights: shape (batch_size, num_heads, seq_len, seq_len)
-    attn = attn_weights.detach().numpy()
-
-    batch_idx = 0
-    num_heads = attn.shape[1]
-    seq_len = attn.shape[2]
-
-    # Decode tokens for axis labels
-    tokens = [itos[i.item()] for i in X_input[batch_idx]]
-
-    fig, axes = plt.subplots(1, num_heads, figsize=(6 * num_heads, 6))
-
-    if num_heads == 1:
-        axes = [axes]  # Ensure iterable
-
-    for head in range(num_heads):
-        ax = axes[head]
-        im = ax.imshow(attn[batch_idx, head], cmap='viridis', vmin=0.0, vmax=1.0)
-        ax.set_title(f'Head {head}')
-
-        ax.set_xticks(range(seq_len))
-        ax.set_yticks(range(seq_len))
-
-        ax.set_xticklabels(tokens)
-        ax.set_yticklabels(tokens)
-
-        ax.set_xlabel('Key Tokens')
-        ax.set_ylabel('Query Tokens')
-    
-    # Show colorbar as intensity legend
-    cbar = fig.colorbar(im, ax=axes, orientation='vertical', fraction=0.02, pad=0.04)
-    cbar.set_label("Attention weight intensity")
-    plt.show()  
 
 def predict_next_tokens(model, file_path, n_pred=2):
     model.eval()
@@ -160,6 +104,58 @@ def predict_next_tokens(model, file_path, n_pred=2):
     generated_text = decode(generated_tokens)
     print(f"Generated text: {generated_text}")
 
+def visualize_attention_grid(model, file_path, n_layers=-1):
+    model.eval()
+    with open(file_path, 'r') as f:
+        input_text = f.read().strip()
+    
+    input_tokens = encode(input_text)
+    x_input = torch.tensor([input_tokens], dtype=torch.long)
+
+    with torch.no_grad():
+        logits, _ = model(x_input)
+
+    predicted_idx = torch.argmax(logits[0, -1]).unsqueeze(0).unsqueeze(0)
+    X_input = torch.cat([x_input, predicted_idx], dim=1)
+
+    with torch.no_grad():
+        _, attn_all_layers = model(X_input)
+
+    batch_idx = 0
+    num_layers = len(attn_all_layers) if n_layers == -1 else n_layers
+    num_heads = attn_all_layers[0].shape[1]
+    seq_len = attn_all_layers[0].shape[2]
+
+    tokens = [itos[i.item()] for i in X_input[batch_idx]]
+
+    # Create a grid of subplots: Rows = Layers, Columns = Heads
+    fig, axes = plt.subplots(num_layers, num_heads, figsize=(6 * num_heads, 6 * num_layers),
+                             gridspec_kw={'hspace': 0.8, 'wspace': 0.3})
+
+    if num_layers == 1:
+        axes = [axes]  # Make sure layers are iterable
+    if num_heads == 1:
+        axes = [[ax] for ax in axes]  # Ensure 2D shape even if 1 head
+
+    for layer_idx in range(num_layers):
+        # attn_weights: shape (batch_size, num_heads, seq_len, seq_len)
+        attn_weights = attn_all_layers[layer_idx].detach().numpy()
+        for head_idx in range(num_heads):
+            ax = axes[layer_idx][head_idx]
+            im = ax.imshow(attn_weights[batch_idx, head_idx], cmap='viridis', vmin=0.0, vmax=1.0)
+            ax.set_title(f"Layer {layer_idx} - Head {head_idx}")
+            ax.set_xticks(range(seq_len))
+            ax.set_yticks(range(seq_len))
+            ax.set_xticklabels(tokens, rotation=90)
+            ax.set_yticklabels(tokens)
+            ax.set_xlabel('Key Tokens')
+            ax.set_ylabel('Query Tokens')
+
+    # Add a single colorbar to the right of all plots
+    fig.subplots_adjust(right=0.85)
+    cbar_ax = fig.add_axes([0.88, 0.15, 0.02, 0.7])
+    fig.colorbar(im, cax=cbar_ax, label="Attention weight intensity")
+    plt.show()
 
 if __name__ == "__main__":
 
@@ -205,8 +201,7 @@ if __name__ == "__main__":
         
         # Test and Visualize Attention weights
         predict_next_tokens(test_model, test_file, 4)
-        visualize_attention(test_model, test_file)
-    
+        visualize_attention_grid(test_model, test_file, n_layers=3)
 
     
     
