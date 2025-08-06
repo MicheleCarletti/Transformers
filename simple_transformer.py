@@ -52,7 +52,7 @@ class TransformerBlock(nn.Module):
         return x, attn_weights
     
 class SimpleTransformer(nn.Module):
-    def __init__(self, vocab_size, d_model=64, nheads=4, num_layers=6):
+    def __init__(self, vocab_size, d_model=128, nheads=4, num_layers=6):
         super().__init__()
         self.token_embedding = nn.Embedding(vocab_size, d_model)
         self.pos_encoding = PositionalEncoding(d_model)
